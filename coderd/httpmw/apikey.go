@@ -366,6 +366,13 @@ func ValidateAPIKey(ctx context.Context, cfg ValidateAPIKeyConfig, r *http.Reque
 			// provider rejected it — surface even on optional-auth
 			// routes.
 			if err != nil {
+				// The provider's reason is returned to the client below, but is
+				// absent from server logs, so refresh failures cannot be
+				// diagnosed after the fact. Log it.
+				cfg.Logger.Warn(ctx, "failed to refresh expired oauth token for user",
+					slog.F("user_id", link.UserID),
+					slog.F("login_type", link.LoginType),
+					slog.Error(err))
 				return nil, &ValidateAPIKeyError{
 					Code: http.StatusUnauthorized,
 					Response: codersdk.Response{

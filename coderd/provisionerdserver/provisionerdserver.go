@@ -3238,6 +3238,12 @@ func ObtainOIDCAccessToken(ctx context.Context, logger slog.Logger, db database.
 			// If OIDC fails to refresh, we return an empty string and don't fail.
 			// There isn't a way to hard-opt in to OIDC from a template, so we don't
 			// want to fail builds if users haven't authenticated for a while or something.
+			//
+			// The build continues without a token, so the provider's reason for
+			// rejecting the refresh (for example an expired or revoked refresh
+			// token) is otherwise discarded. Log it so the cause is diagnosable.
+			logger.Warn(ctx, "failed to refresh OIDC token for user during workspace build",
+				slog.F("user_id", userID), slog.Error(err))
 			return "", nil
 		}
 		link.OAuthAccessToken = token.AccessToken
